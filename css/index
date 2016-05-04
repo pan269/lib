@@ -1,0 +1,2 @@
+1.index  div超出部分显示省略号
+div {display:block;white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
