@@ -10,7 +10,7 @@
     Code for PHP 5.3+ only
 */
 
-class Ip
+class IP
 {
     private static $ip     = NULL;
 
