@@ -83,4 +83,104 @@ class Gear
 		return false;
 	}
 
+
+	/**
+	* PHP获取字符串中英文混合长度 
+	* @Author:pan
+	* @param $str string 字符串
+	* @param $$charset string 编码
+	* @return 返回长度
+	*/
+	static function strLength($str,$charset='utf-8')
+	{
+	    if($charset=='utf-8')
+	    {
+	        $str = iconv('utf-8','GBK',$str);
+	    }
+	    $num = strlen($str);
+	    $cnNum = 0;
+	    for($i=0;$i<$num;$i++)
+	    {
+	        if(ord(substr($str,$i+1,1))>127)
+	        {
+	            $cnNum++;
+	            $i++;
+	        }
+	    }
+	    $enNum = $num-($cnNum*2);
+
+	    $number = $enNum+$cnNum;
+	    //var_dump($number);
+	    return $number;
+	}
+
+	/**
+	 * 获取字符串 
+	 * @Author:pan
+	 *
+	 * @param   string
+	 * @return  string
+	 */
+
+	static function cut_str($string, $sublen, $start = 0, $code = 'UTF-8')
+	{
+	    if($code == 'UTF-8')
+	    {
+	        $pa = "/[\x01-\x7f]|[\xc2-\xdf][\x80-\xbf]|\xe0[\xa0-\xbf][\x80-\xbf]|[\xe1-\xef][\x80-\xbf][\x80-\xbf]|\xf0[\x90-\xbf][\x80-\xbf][\x80-\xbf]|[\xf1-\xf7][\x80-\xbf][\x80-\xbf][\x80-\xbf]/";
+	        preg_match_all($pa, $string, $t_string);
+	        if(count($t_string[0]) - $start > $sublen) return join('', array_slice($t_string[0], $start, $sublen));
+	        return join('', array_slice($t_string[0], $start, $sublen));
+	    }
+	    else
+	    {
+	        $start = $start*2;
+	        $sublen = $sublen*2;
+	        $strlen = strlen($string);
+	        $tmpstr = '';
+	        for($i=0; $i< $strlen; $i++)
+	        {
+	            if($i>=$start && $i< ($start+$sublen))
+	            {
+	                if(ord(substr($string, $i, 1))>129)
+	                {
+	                    $tmpstr.= substr($string, $i, 2);
+	                }
+	                else
+	                {
+	                    $tmpstr.= substr($string, $i, 1);
+	                }
+	            }
+	            if(ord(substr($string, $i, 1))>129) $i++;
+	        }
+	        //if(strlen($tmpstr)< $strlen ) $tmpstr.= "...";
+	        return $tmpstr;
+	    }
+	}
+
+
+	/**
+	* 检查当前打开的终端
+	* $Auther:pan
+	*
+	*
+	*
+	**/
+	static function checkTerminal()
+	{
+	    //微信
+	    if ( strpos($_SERVER['HTTP_USER_AGENT'], 'MicroMessenger') !== false ) {  
+	        return 'weixin';  
+	    } 
+
+	    return 'unknown';   
+	}
+
+
+	static function php_write($val = '',$file = '/tmp/php_write.log',$mode = 'a+')
+	{
+	    $fp = fopen($file, $mode);
+	    fwrite($fp,$val);
+	    fclose($fp);
+	}
+
 }
