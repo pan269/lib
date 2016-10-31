@@ -183,4 +183,25 @@ class Gear
 	    fclose($fp);
 	}
 
+	/**
+	* 订单号生成
+	* 作者: unknow
+	**/
+	static function orderNumCreate1($start=2016)
+	{
+		$yCode = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J');
+		$orderSn = $yCode[intval(date('Y')) - $start] . strtoupper(dechex(date('m'))) . date('d') . substr(time(), -5) . substr(microtime(), 2, 5) . sprintf('%02d', rand(0, 99));
+	}
+
+	/**
+	* 订单号生成
+	* 作者: unknow
+	**/
+	static function orderNumCreate2()
+	{
+		return date('Ymd').substr(implode(NULL, array_map('ord', str_split(substr(uniqid(), 7, 13), 1))), 0, 8);
+	}
+
+
+
 }
