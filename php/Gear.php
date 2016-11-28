@@ -206,7 +206,8 @@ class Gear
 	* 大整数相加
 	* 作者: unknow
 	**/
-	static function strAdd($str1,$str2){
+	static function strAdd($str1,$str2)
+	{
 	    $res = array();
 	    if(strlen($str1) > strlen($str2)){
 	        $str2 = str_pad($str2,strlen($str1),'0',STR_PAD_LEFT);
@@ -227,5 +228,44 @@ class Gear
 	    return $res;
 	}
 
+	/**
+	* html 标签补全
+	* 作者: unknow
+	**/
+	function CloseTags($html)
+	{
+		// strip fraction of open or close tag from end (e.g. if we take first x characters, we might cut off a tag at the end!)
+		$html = preg_replace('/<[^>]*$/','',$html); // ending with fraction of open tag
+		// put open tags into an array
+		preg_match_all('#<([a-z]+)(?: .*)?(?<![/|/ ])>#iU', $html, $result);
+		$opentags = $result[1];
+		// put all closed tags into an array
+		preg_match_all('#</([a-z]+)>#iU', $html, $result);
+		$closetags = $result[1];
+		$len_opened = count($opentags);
+		// if all tags are closed, we can return
+		if (count($closetags) == $len_opened) {
+			return $html;
+		}
+		// close tags in reverse order that they were opened
+		$opentags = array_reverse($opentags);
+		// self closing tags
+		$sc = array('br','input','img','hr','meta','link');
+		// ,'frame','iframe','param','area','base','basefont','col'
+		// should not skip tags that can have content inside!
+		for ($i=0; $i < $len_opened; $i++){
+			$ot = strtolower($opentags[$i]);
+			if (!in_array($opentags[$i], $closetags) && !in_array($ot,$sc)){
+				$html .= '</'.$opentags[$i].'>';
+			}
+			else{
+				unset($closetags[array_search($opentags[$i], $closetags)]);
+			}
+		}
+		return $html;
+	}
+
 
 }
+
+
