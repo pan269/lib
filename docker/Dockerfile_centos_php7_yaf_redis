@@ -1,0 +1,116 @@
+FROM centos:7
+MAINTAINER z <panzhi269@gmail.com>
+
+#Install system library
+#RUN yum update -y
+RUN yum install -y gcc \
+    gcc-c++ \
+    autoconf \
+    automake \
+    libtool \
+    make \
+    cmake && \
+    yum clean all
+
+#Install PHP library
+## libmcrypt-devel DIY
+RUN rpm -ivh http://mirrors.ustc.edu.cn/fedora/epel/6/x86_64/epel-release-6-8.noarch.rpm   && \
+    yum install -y wget \
+    zlib \
+    zlib-devel \
+    openssl \
+    openssl-devel \
+    pcre-devel \
+    libxml2 \
+    libxml2-devel \
+    libcurl \
+    libcurl-devel \
+    libpng-devel \
+    libjpeg-devel \
+    freetype-devel \
+    libmcrypt-devel \
+    openssh-server \
+    python-setuptools && \
+    yum clean all
+
+#Add user
+RUN groupadd -r www && \
+    useradd -M -s /sbin/nologin -r -g www www
+
+#Download nginx & php
+RUN cd /home && \
+    wget -c http://cn2.php.net/distributions/php-7.1.3.tar.gz
+
+#Make install php
+RUN cd /home && \
+    tar zvxf php-7.1.3.tar.gz && \
+    cd php-7.1.3 && \
+    ./configure --prefix=/usr/local/php7 \
+    --with-config-file-path=/usr/local/php7/etc \
+    --with-config-file-scan-dir=/usr/local/php7/etc/php.d \
+    --with-fpm-user=www \
+    --with-fpm-group=www \
+    --with-mcrypt=/usr/include \
+    --with-mysqli \
+    --with-pdo-mysql \
+    --with-openssl \
+    --with-gd \
+    --with-iconv \
+    --with-zlib \
+    --with-gettext \
+    --with-curl \
+    --with-png-dir \
+    --with-jpeg-dir \
+    --with-freetype-dir \
+    --with-xmlrpc \
+    --with-mhash \
+    --enable-fpm \
+    --enable-xml \
+    --enable-shmop \
+    --enable-sysvsem \
+    --enable-inline-optimization \
+    --enable-mbregex \
+    --enable-mbstring \
+    --enable-ftp \
+    --enable-gd-native-ttf \
+    --enable-mysqlnd \
+    --enable-pcntl \
+    --enable-sockets \
+    --enable-zip \
+    --enable-soap \
+    --enable-session \
+    --enable-opcache \
+    --enable-bcmath \
+    --enable-exif \
+    --disable-fileinfo \
+    --disable-rpath \
+    --disable-ipv6 \
+    --disable-debug \
+    --without-pear && \
+    make && make install
+
+RUN cd /home/php-7.1.3/ && \
+    cp php.ini-production /usr/local/php7/etc/php.ini && \
+    cp /usr/local/php7/etc/php-fpm.conf.default /usr/local/php7/etc/php-fpm.conf && \
+    cp /usr/local/php7/etc/php-fpm.d/www.conf.default /usr/local/php7/etc/php-fpm.d/www.conf 
+
+#Make install yaf
+RUN cd /home && \
+    wget -c http://pecl.php.net/get/yaf-3.0.4.tgz && \
+    tar zvxf yaf-3.0.4.tgz && cd yaf-3.0.4 && \
+    /usr/local/php7/bin/phpize && \
+    ./configure --with-php-config=/usr/local/php7/bin/php-config && \
+    make && make install 
+
+RUN echo 'extension=/usr/local/php7/lib/php/extensions/no-debug-non-zts-20160303/yaf.so' >> /usr/local/php7/etc/php.ini  
+
+
+#Make install redis
+RUN cd /home && \
+    wget -c http://pecl.php.net/get/redis-3.1.1.tgz && \
+    tar zvxf redis-3.1.1.tgz && cd redis-3.1.1 && \
+    /usr/local/php7/bin/phpize && \
+    ./configure --with-php-config=/usr/local/php7/bin/php-config && \
+    make && make install 
+
+RUN echo 'extension=/usr/local/php7/lib/php/extensions/no-debug-non-zts-20160303/redis.so' >> /usr/local/php7/etc/php.ini
