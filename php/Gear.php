@@ -630,5 +630,85 @@ class Gear
 		return $html;
 	}
 
+	public static function create_uuid(){
+	    if (function_exists('com_create_guid')){
+	        return com_create_guid();
+	    }else{
+	        mt_srand((double)microtime()*10000);//optional for php 4.2.0 and up.
+	        $charid = strtoupper(md5(uniqid(rand(), true)));
+	        $hyphen = chr(45);// "-"
+	        $uuid = chr(123)// "{"
+	                .substr($charid, 0, 8).$hyphen
+	                .substr($charid, 8, 4).$hyphen
+	                .substr($charid,12, 4).$hyphen
+	                .substr($charid,16, 4).$hyphen
+	                .substr($charid,20,12)
+	                .chr(125);// "}"
+	        return $uuid;
+	    }
+	}
 
+	public static function create_guid(){ 
+	    $microTime = microtime(); 
+	    list($a_dec, $a_sec) = explode(" ", $microTime); 
+	    $dec_hex = dechex($a_dec* 1000000); 
+	    $sec_hex = dechex($a_sec); 
+	    Gear::ensure_length($dec_hex, 5); 
+	    Gear::ensure_length($sec_hex, 6); 
+	    $guid = ""; 
+	    $guid .= $dec_hex; 
+	    $guid .= Gear::create_guid_section(3); 
+	    $guid .= '-'; 
+	    $guid .= Gear::create_guid_section(4); 
+	    $guid .= '-'; 
+	    $guid .= Gear::create_guid_section(4); 
+	    $guid .= '-'; 
+	    $guid .= Gear::create_guid_section(4); 
+	    $guid .= '-'; 
+	    $guid .= $sec_hex; 
+	    $guid .= Gear::create_guid_section(6); 
+	    return $guid; 
+	} 
+
+	public static function ensure_length(&$string, $length){    
+	    $strlen = strlen($string);    
+	    if($strlen < $length)    
+	    {    
+	        $string = str_pad($string,$length,"0");    
+	    }    
+	    else if($strlen > $length)    
+	    {    
+	        $string = substr($string, 0, $length);    
+	    }   
+	 } 
+
+	public static function create_guid_section($characters){ 
+	    $return = ""; 
+	    for($i=0; $i<$characters; $i++) 
+	    { 
+	        $return .= dechex(mt_rand(0,15)); 
+	    } 
+	    return $return; 
+	} 
+
+	/** 
+     *  
+    * 返回一定位数的时间戳，多少位由参数决定 
+    * 
+    * @author 陈博 
+    * @param type 多少位的时间戳 
+    * @return 时间戳 
+     */  
+    public static function getTimestamp($digits = false) {  
+        $digits = $digits > 10 ? $digits : 10;  
+        $digits = $digits - 10;  
+        if ((!$digits) || ($digits == 10))  
+        {  
+            return time();  
+        }  
+        else  
+        {  
+            return number_format(microtime(true),$digits,'','');  
+        }  
+    }  
 }
