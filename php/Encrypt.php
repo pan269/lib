@@ -18,6 +18,9 @@ class Encrypt
     private $aes_mode = MCRYPT_MODE_ECB;  
     private $aes_key = 'key11133key11133';  //key 长度16, 24 or 32 
 
+    private $bf_key = 'ld983jhnfu8923';
+    private $bf_iv = 'lkunfhyr';
+
 
     private $rsa_priv = '-----BEGIN RSA PRIVATE KEY-----  
 MIICXQIBAAKBgQC3//sR2tXw0wrC2DySx8vNGlqt3Y7ldU9+LBLI6e1KS5lfc5jl  
@@ -87,7 +90,7 @@ Bd6h4wrbbHA2XE1sq21ykja/Gqx7/IRia3zQfxGv/qEkyGOx+XALVoOlZqDwh76o
 	 * @param                             [type] $data [description]
 	 * @return                            [type]       [description]
 	 */
-	public static function phpDecryptA($data)  
+	public function phpDecryptA($data)  
 	{  
 	    $key    = md5($this->php_key_a);  
 	    $x 		= 0;  
@@ -301,7 +304,7 @@ Bd6h4wrbbHA2XE1sq21ykja/Gqx7/IRia3zQfxGv/qEkyGOx+XALVoOlZqDwh76o
 	 * @param                             [type] $blocksize [description]
 	 * @return                            [type]            [description]
 	 */
-	function _pkcs5Pad($text, $blocksize) {
+	private function _pkcs5Pad($text, $blocksize) {
 		$pad = $blocksize - (strlen ( $text ) % $blocksize);
 		return $text . str_repeat ( chr ( $pad ), $pad );
 	}
@@ -314,7 +317,7 @@ Bd6h4wrbbHA2XE1sq21ykja/Gqx7/IRia3zQfxGv/qEkyGOx+XALVoOlZqDwh76o
 	 * @param                             [type] $text [description]
 	 * @return                            [type]       [description]
 	 */
-	function _pkcs5Unpad($text) {
+	private function _pkcs5Unpad($text) {
 		$pad = ord ( $text {strlen ( $text ) - 1} );
 		if ($pad > strlen ( $text )){
 			return false;
@@ -374,4 +377,101 @@ Bd6h4wrbbHA2XE1sq21ykja/Gqx7/IRia3zQfxGv/qEkyGOx+XALVoOlZqDwh76o
     private function _rsaPubKey(){
     	return openssl_pkey_get_public($this->rsa_pub);
     }
+
+
+    public function BFEncrypt($str)
+	{
+		$cipher = mcrypt_module_open(MCRYPT_BLOWFISH, '', MCRYPT_MODE_ECB, '');
+
+		//pkcs5补码
+		// $size = mcrypt_get_block_size(MCRYPT_BLOWFISH, MCRYPT_MODE_ECB);
+		// $str = $this->pkcs5_pad($str, $size);
+
+		if (mcrypt_generic_init($cipher, $this->bf_key, $this->bf_iv) != -1)
+		{
+			$cipherText = mcrypt_generic($cipher, $str);
+			mcrypt_generic_deinit($cipher);
+
+			return strtoupper(bin2hex($cipherText));
+		}
+
+		mcrypt_module_close($cipher);
+	 }
+
+	 /**
+	  * blowfish + cbc模式 + pkcs5 解密 去补码
+	  * 修改注释：现在采取ECB模式
+	  * @param string $str 加密的数据
+	  * @return string 解密的数据
+	  */
+	 #public function blowfish_cbc_pkcs5_decrypt($str)
+	public function BFDecrypt ($str)
+	{
+		$cipher = mcrypt_module_open(MCRYPT_BLOWFISH, '', MCRYPT_MODE_ECB, '');
+
+		if (mcrypt_generic_init($cipher, $this->bf_key, $this->bf_iv) != -1)
+		{
+			$cipherText = mdecrypt_generic($cipher,  hex2bin(strtolower($str)));
+			mcrypt_generic_deinit($cipher);
+
+			return $cipherText;
+		}
+
+		mcrypt_module_close($cipher);
+	}
+
+
+	/**
+	* blowfish + cbc模式 + pkcs5补码 加密
+	* @param string $str 需要加密的数据
+	* @return string 加密后base64加密的数据
+	*/
+	public function BFEncryptB($str)
+	{
+		$cipher = mcrypt_module_open(MCRYPT_BLOWFISH, '', MCRYPT_MODE_CBC, '');
+
+		//pkcs5补码
+		$size = mcrypt_get_block_size(MCRYPT_BLOWFISH, MCRYPT_MODE_CBC);
+		$str = $this->pkcs5_pad($str, $size);
+
+		if (mcrypt_generic_init($cipher, $this->key, $this->iv) != -1)
+		{
+		$cipherText = mcrypt_generic($cipher, $str);
+		mcrypt_generic_deinit($cipher);
+
+		return base64_encode($cipherText);
+		}
+
+		mcrypt_module_close($cipher);
+	}
+
+	/**
+	* blowfish + cbc模式 + pkcs5 解密 去补码
+	* @param string $str 加密的数据
+	* @return string 解密的数据
+	*/
+	public function BFDecryptB($str)
+	{
+		$cipher = mcrypt_module_open(MCRYPT_BLOWFISH, '', MCRYPT_MODE_CBC, '');
+
+		if (mcrypt_generic_init($cipher, $this->key, $this->iv) != -1)
+		{
+			$cipherText = mdecrypt_generic($cipher, base64_decode($str));
+			mcrypt_generic_deinit($cipher);
+
+			return $this->pkcs5_unpad($cipherText);
+		}
+
+		mcrypt_module_close($cipher);
+	}
+
+	private function pkcs5_pad($text, $blocksize){
+		$pad = $blocksize - (strlen ( $text ) % $blocksize);
+		return $text . str_repeat ( chr ( $pad ), $pad );
+	}
+
+	private function pkcs5_unpad($str){
+		$pad = ord($str[($len = strlen($str)) - 1]);
+		return substr($str, 0, strlen($str) - $pad);
+	}
 }
